@@ -507,54 +507,117 @@
   }
 
   function buildStartPrompt() {
-    return `<dead_player_start>
-【玩家开局资料】
+    return `【玩家开局档案提交】
 
-${buildPlayerProfile()}
+请根据当前世界书与以下玩家资料，正式开始本局复活赛。
 
-请根据当前世界书，直接开始本局复活赛正文。
+你必须完成以下内容：
+1. 确认当前玩家档案。
+2. 根据玩家死亡原因、生前身份、性格倾向、背景故事和遗愿执念，随机生成一个特殊能力。
+3. 根据玩家死亡原因、生前身份、死亡现场可能残留物、遗愿执念和复活赛规则，随机生成一个初始道具。
+4. 特殊能力不能过强，不能直接复活、秒杀、无限预知、无限回溯或改写世界规则。
+5. 初始道具不能过强，只能作为线索、一次性保护、小范围判定辅助、轻微惩罚抵消或剧情触发物。
+6. 从现在开始，“玩家”“用户”“你”都指代玩家档案中的姓名。如果酒馆默认用户名称不同，必须忽略默认名称，以玩家档案姓名为准。
+7. 不要再询问玩家是否开始，不要停在准备阶段，直接进入正文第一幕。
+8. 你输出的内容必须包含玩家技能与初始道具，然后立刻开始正赛剧情。
 
-写作要求：
-- 不要输出“玩家档案确认”“特殊能力”“初始道具”“正赛开始”等模板标题。
-- 不要像报告一样列清单，不要重复解释规则，不要询问玩家是否开始。
-- 直接进入正式剧情正文，让玩家感觉复活赛已经开始。
-- 在正文里自然交代玩家的姓名、死因、外貌、背景或执念。
-- 在剧情推进中自然写明玩家获得的特殊能力和初始道具。
-- 特殊能力与初始道具必须贴合玩家死因、生前身份、性格倾向、背景故事和遗愿执念。
-- 能力和道具不能过强，必须带有触发条件、限制或代价。
-- 从现在开始，“玩家”“用户”“你”都指代玩家档案里的姓名；如果酒馆默认用户名称不同，必须忽略默认名称。
-- 第一幕需要体现地狱复活赛、大富翁式命运格、玩家死亡原因带来的影响，以及玩家面临的第一个选择。
+请严格按以下格式输出：
 
-直接开始正文。
-</dead_player_start>`;
+【玩家档案确认】
+姓名：
+年龄：
+性别 / 性别表现：
+生前职业 / 身份：
+性格倾向：
+死亡原因：
+外貌特征：
+背景故事：
+遗愿 / 执念：
+
+【特殊能力】
+名称：
+效果：
+限制：
+代价：
+
+【初始道具】
+名称：
+描述：
+用途：
+限制：
+
+【正赛开始】
+从第一幕剧情开始描写。第一幕必须体现地狱复活赛、大富翁式命运格、玩家死亡原因带来的影响，以及玩家即将面对的第一个选择。
+
+以下是当前玩家资料：
+
+${buildPlayerProfile()}`;
   }
 
-  function getSTDocument() {
-    try {
-      if (window.parent && window.parent.document && window.parent.document !== document) {
-        return window.parent.document;
-      }
-    } catch (e) {}
+  function getSTDocuments() {
+    const docs = [];
+    const addDoc = (doc) => {
+      if (!doc) return;
+      if (doc === document) return; // 绝不在当前网页表单里找，避免把内容塞进“外貌特征”等输入框
+      if (!docs.includes(doc)) docs.push(doc);
+    };
 
-    try {
-      if (window.top && window.top.document && window.top.document !== document) {
-        return window.top.document;
+    try { addDoc(window.parent && window.parent.document); } catch (e) {}
+    try { addDoc(window.top && window.top.document); } catch (e) {}
+
+    return docs;
+  }
+
+  function findChatInput() {
+    const selectors = [
+      "#send_textarea",
+      "textarea#send_textarea",
+      "#send_textarea textarea",
+      "textarea[name='send_textarea']",
+      "[contenteditable='true']#send_textarea",
+      "[contenteditable='true'][data-testid='send_textarea']"
+    ];
+
+    const docs = getSTDocuments();
+
+    for (const doc of docs) {
+      for (const selector of selectors) {
+        const node = doc.querySelector(selector);
+        if (node) return node;
       }
-    } catch (e) {}
+    }
 
     return null;
   }
 
-  function findChatInput() {
-    const doc = getSTDocument();
-    if (!doc) return null;
-    return doc.querySelector("#send_textarea");
-  }
-
   function findSendButton() {
-    const doc = getSTDocument();
-    if (!doc) return null;
-    return doc.querySelector("#send_but");
+    const selectors = [
+      "#send_but",
+      "#send_button",
+      "#mes_send",
+      "button#send_but",
+      "button#send_button",
+      "[data-testid='send-button']",
+      "[title='发送']",
+      "[title*='发送']",
+      "[title='Send']",
+      "[title*='Send']",
+      "[aria-label='发送']",
+      "[aria-label*='发送']",
+      "[aria-label='Send']",
+      "[aria-label*='Send']"
+    ];
+
+    const docs = getSTDocuments();
+
+    for (const doc of docs) {
+      for (const selector of selectors) {
+        const node = doc.querySelector(selector);
+        if (node) return node;
+      }
+    }
+
+    return null;
   }
 
   function setInputValue(input, text) {
@@ -607,47 +670,43 @@ ${buildPlayerProfile()}
   }
 
   async function startGame() {
-    const prompt = buildStartPrompt();
-
     if (!val("pName")) {
       alert("请先填写玩家姓名。");
       return;
     }
 
-    try {
-      fillInput(prompt);
-      await sleep(180);
-      clickSend();
+    const payload = {
+      name: val("pName") || "未填写",
+      age: val("pAge") || "未填写",
+      gender: selectOrCustom("pGender", "customGender"),
+      job: selectOrCustom("pJob", "customJob"),
+      personality: selectOrCustom("pPersonality", "customPersonality"),
+      deathReason: getDeathReason(),
+      look: val("pLook") || "未填写",
+      story: val("pStory") || "未填写",
+      wish: val("pWish") || "未填写"
+    };
 
-      document.body.innerHTML = `
-        <div style="
-          min-height:100vh;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          background:#070304;
-          color:#ffd17a;
-          font-family:Microsoft YaHei, sans-serif;
-          text-align:center;
-          padding:24px;
-        ">
-          <div style="
-            max-width:520px;
-            border:1px solid rgba(255,106,44,.35);
-            border-radius:20px;
-            padding:28px;
-            background:linear-gradient(180deg, rgba(52,12,12,.9), rgba(12,4,5,.95));
-            box-shadow:0 18px 60px rgba(0,0,0,.65);
-          ">
-            <h2 style="margin:0 0 10px;">复活赛已开始</h2>
-            <p style="margin:0;color:#bfa69c;line-height:1.7;">玩家档案已提交，判官正在裁定你的能力、道具与第一幕命运格。</p>
-          </div>
-        </div>
-      `;
+    try {
+      if (window.parent && typeof window.parent.DeadPlayerAutoStart === "function") {
+        const result = await window.parent.DeadPlayerAutoStart(payload);
+
+        if (result && result.ok) {
+          document.body.innerHTML = `
+            <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#070304;color:#ffd17a;font-family:Microsoft YaHei, sans-serif;text-align:center;padding:24px;">
+              <div style="border:1px solid rgba(255,106,44,.45);border-radius:18px;padding:26px;background:rgba(28,7,8,.94);box-shadow:0 0 35px rgba(255,42,20,.18);">
+                <h2 style="margin:0 0 10px;">复活赛已开始</h2>
+                <p style="margin:0;color:#bfa69c;">玩家档案已提交给判官，正在进入正文。</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+      }
+
+      alert("没有找到酒馆助手自动化脚本 DeadPlayerAutoStart。请确认角色脚本已启用，并刷新页面后重试。");
     } catch (err) {
-      const msg = err && err.message ? err.message : String(err);
-      alert(msg);
-      setStatus(msg);
+      alert("提交到酒馆助手脚本失败：" + (err && err.message ? err.message : err));
     }
   }
 
