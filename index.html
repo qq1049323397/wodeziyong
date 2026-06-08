@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>亡者玩家档案</title>
+
+<style>
+  :root {
+    --bg: #070304;
+    --card: rgba(28, 7, 8, 0.94);
+    --card2: rgba(52, 12, 12, 0.88);
+    --red: #d91f1f;
+    --red2: #ff3d2e;
+    --orange: #ff8a24;
+    --gold: #ffd17a;
+    --text: #fff1e3;
+    --muted: #bfa69c;
+    --line: rgba(255, 106, 44, 0.35);
+    --input: rgba(10, 4, 5, 0.82);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 50% 110%, rgba(255, 70, 10, 0.38), transparent 38%),
+      radial-gradient(circle at 8% 10%, rgba(184, 20, 20, 0.28), transparent 30%),
+      radial-gradient(circle at 90% 12%, rgba(255, 122, 20, 0.18), transparent 28%),
+      linear-gradient(180deg, #140506 0%, #070304 62%, #000 100%);
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, transparent, black 16%, black 82%, transparent);
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    left: -10%;
+    right: -10%;
+    bottom: -18%;
+    height: 40vh;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, rgba(255, 53, 0, 0.45), transparent 62%),
+      linear-gradient(180deg, transparent, rgba(255, 74, 0, 0.12), rgba(255, 128, 0, 0.22));
+    filter: blur(18px);
+    animation: firePulse 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes firePulse {
+    from { opacity: 0.62; transform: translateY(8px) scale(1); }
+    to { opacity: 1; transform: translateY(-4px) scale(1.03); }
+  }
+
+  .wrap {
+    width: min(960px, calc(100% - 24px));
+    margin: 18px auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, var(--card2), var(--card)),
+      radial-gradient(circle at 50% 0%, rgba(255, 86, 28, 0.18), transparent 42%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 0 36px rgba(255, 42, 20, 0.16),
+      0 24px 70px rgba(0,0,0,0.75);
+  }
+
+  .header {
+    padding: 22px 22px 16px;
+    border-bottom: 1px solid rgba(255, 111, 40, 0.2);
+  }
+
+  .badge {
+    display: inline-flex;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 138, 36, 0.38);
+    border-radius: 999px;
+    color: var(--gold);
+    background: rgba(255, 60, 0, 0.1);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .title {
+    margin: 10px 0 4px;
+    font-size: clamp(25px, 4vw, 38px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 0 18px rgba(255, 59, 47, 0.5);
+  }
+
+  .subtitle {
+    margin: 0;
+    max-width: 760px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .section {
+    margin: 18px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section:first-child {
+    margin-top: 0;
+  }
+
+  .section .mark {
+    width: 9px;
+    height: 22px;
+    border-radius: 99px;
+    background: linear-gradient(180deg, var(--orange), var(--red));
+    box-shadow: 0 0 16px rgba(255, 80, 28, 0.58);
+  }
+
+  .section h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #ffe0ba;
+    letter-spacing: 1px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .field {
+    margin-bottom: 12px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #f8d4ba;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    border: 1px solid rgba(255, 126, 63, 0.3);
+    border-radius: 12px;
+    padding: 10px 11px;
+    background: var(--input);
+    color: var(--text);
+    outline: none;
+    font-size: 14px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.025) inset;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: rgba(255, 138, 31, 0.75);
+    box-shadow: 0 0 0 3px rgba(255, 88, 20, 0.14);
+  }
+
+  select option {
+    background: #160809;
+    color: var(--text);
+  }
+
+  textarea {
+    min-height: 82px;
+    resize: vertical;
+    line-height: 1.55;
+  }
+
+  .custom-box {
+    display: none;
+    margin-top: 8px;
+  }
+
+  .hint {
+    margin-top: 6px;
+    color: #a88f87;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .start-panel {
+    margin-top: 18px;
+    padding: 15px;
+    border: 1px solid rgba(255, 138, 31, 0.25);
+    border-radius: 16px;
+    background: rgba(255, 72, 0, 0.075);
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  button {
+    border: 0;
+    border-radius: 12px;
+    padding: 11px 16px;
+    color: #fff7ef;
+    font-weight: 900;
+    cursor: pointer;
+    background: linear-gradient(180deg, #ff6a2a, #b81716);
+    box-shadow:
+      0 8px 20px rgba(179, 23, 22, 0.3),
+      0 0 0 1px rgba(255,255,255,0.08) inset;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  button.secondary {
+    background: rgba(255,255,255,0.12);
+    color: #f6e7d8;
+  }
+
+  button.ghost {
+    background: transparent;
+    border: 1px solid rgba(255, 126, 63, 0.4);
+    color: #ffd3b1;
+  }
+
+  .status {
+    display: none;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.34);
+    border: 1px solid rgba(255, 138, 31, 0.24);
+    color: #ffe5c8;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .footer {
+    padding: 0 20px 20px;
+    color: #9d817b;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 720px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .header {
+      padding: 18px 16px 12px;
+    }
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div class="badge">HELL REVIVAL GAME · ENTRY FORM</div>
+      <h1 class="title">亡者入场登记</h1>
+      <p class="subtitle">
+        你已经死亡。这里是复活赛开始前的登记处。填写资料后点击“开始复活赛”，系统会把你的档案提交给判官，让判官为你生成特殊能力、初始道具，并直接进入复活赛。
+      </p>
+    </div>
+
+    <div class="content">
+      <div class="section">
+        <span class="mark"></span>
+        <h2>基础信息</h2>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>姓名</label>
+          <input id="pName" placeholder="例如：老蒯" />
+          <div class="hint">这个名字会覆盖酒馆默认用户名称。</div>
+        </div>
+
+        <div class="field">
+          <label>年龄</label>
+          <input id="pAge" type="number" placeholder="例如：22" />
+        </div>
+
+        <div class="field">
+          <label>性别 / 性别表现</label>
+          <select id="pGender" onchange="toggleCustom('pGender','customGenderBox')">
+            <option value="">请选择</option>
+            <option>男</option>
+            <option>女</option>
+            <option>沃尔玛塑料袋</option>
+            <option>自定义</option>
+          </select>
+          <div class="custom-box" id="customGenderBox">
+            <input id="customGender" placeholder="请输入自定义性别 / 性别表现" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>生前职业 / 身份</label>
+          <select id="pJob" onchange="toggleCustom('pJob','customJobBox')">
+            <option value="">请选择</option>
+            <option>学生</option>
+            <option>社畜</option>
+            <option>医生</option>
+            <option>警察</option>
+            <option>教师</option>
+            <option>商人</option>
+            <option>艺术家</option>
+            <option>无业</option>
+            <option>流浪者</option>
+            <option>罪犯</option>
+            <option>自定义</option>
+          </select>
+          <div class="custom-box" id="customJobBox">
+            <input id="customJob" placeholder="例如：擦边主播、小红书主播、女权主播、荷官" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>性格倾向</label>
+        <select id="pPersonality" onchange="toggleCustom('pPersonality','customPersonalityBox')">
+          <option value="">请选择</option>
+          <option>冷静</option>
+          <option>胆小</option>
+          <option>冲动</option>
+          <option>理性</option>
+          <option>自私</option>
+          <option>善良</option>
+          <option>多疑</option>
+          <option>乐观</option>
+          <option>疯癫</option>
+          <option>自定义</option>
+        </select>
+        <div class="custom-box" id="customPersonalityBox">
+          <input id="customPersonality" placeholder="例如：纯贱人" />
+        </div>
+      </div>
+
+      <div class="section">
+        <span class="mark"></span>
+        <h2>死亡信息</h2>
+      </div>
+
+      <div class="field">
+        <label>死亡原因</label>
+        <select id="deathReason" onchange="toggleCustom('deathReason','customDeathBox')">
+          <option value="">请选择</option>
+          <option>上吊</option>
+          <option>溺水</option>
+          <option>他杀</option>
+          <option>触电</option>
+          <option>车祸</option>
+          <option>坠楼</option>
+          <option>火灾</option>
+          <option>中毒</option>
+          <option>疾病</option>
+          <option>失血</option>
+          <option>窒息</option>
+          <option>冻死</option>
+          <option>不明原因</option>
+          <option>自定义</option>
+        </select>
+        <div class="custom-box" id="customDeathBox">
+          <input id="customDeath" placeholder="例如：被东北雨姐的42码大脚踩死" />
+        </div>
+      </div>
+
+      <div class="section">
+        <span class="mark"></span>
+        <h2>人物描写</h2>
+      </div>
+
+      <div class="field">
+        <label>外貌特征</label>
+        <textarea id="pLook" placeholder="例如：长得跟丑橘一样"></textarea>
+      </div>
+
+      <div class="field">
+        <label>背景故事</label>
+        <textarea id="pStory" placeholder="你生前是什么人？经历过什么？为什么会来到这里？"></textarea>
+      </div>
+
+      <div class="field">
+        <label>遗愿 / 执念</label>
+        <textarea id="pWish" placeholder="例如：想再被雨姐踩一遍。"></textarea>
+      </div>
+
+      <div class="start-panel">
+        <b>准备进入正赛</b>
+        <div class="hint">
+          点击后，网页会把玩家资料整理成开局指令，提交给酒馆输入框，并尝试自动发送。AI会根据世界书生成特殊能力、初始道具，并直接开始正文。
+        </div>
+
+        <div class="button-row">
+          <button type="button" onclick="startGame()">开始复活赛</button>
+          <button type="button" class="secondary" onclick="clearForm()">清空</button>
+        </div>
+      </div>
+
+      <div class="status" id="statusBox"></div>
+    </div>
+
+    <div class="footer">
+      填写完成后点击开始复活赛，系统会尝试直接提交到酒馆正文。
+    </div>
+  </div>
+</div>
+
+<script>
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function val(id) {
+    const node = el(id);
+    return node ? node.value.trim() : "";
+  }
+
+  function setStatus(text) {
+    const box = el("statusBox");
+    box.innerText = text;
+    box.style.display = "block";
+  }
+
+  function toggleCustom(selectId, boxId) {
+    const select = el(selectId);
+    const box = el(boxId);
+    if (!select || !box) return;
+    box.style.display = select.value === "自定义" ? "block" : "none";
+  }
+
+  function selectOrCustom(selectId, customId) {
+    const selected = val(selectId);
+    if (selected === "自定义") {
+      return val(customId) || "未填写";
+    }
+    return selected || "未填写";
+  }
+
+  function getDeathReason() {
+    const selected = val("deathReason");
+    if (selected === "自定义") {
+      return val("customDeath") || "未填写";
+    }
+    return selected || "未填写";
+  }
+
+  function buildPlayerProfile() {
+    return `【玩家基础信息】
+姓名：${val("pName") || "未填写"}
+年龄：${val("pAge") || "未填写"}
+性别 / 性别表现：${selectOrCustom("pGender", "customGender")}
+生前职业 / 身份：${selectOrCustom("pJob", "customJob")}
+性格倾向：${selectOrCustom("pPersonality", "customPersonality")}
+
+【死亡信息】
+死亡原因：${getDeathReason()}
+
+【人物描写】
+外貌特征：${val("pLook") || "未填写"}
+背景故事：${val("pStory") || "未填写"}
+遗愿 / 执念：${val("pWish") || "未填写"}`;
+  }
+
+  function buildStartPrompt() {
+    return `【玩家开局档案提交】
+
+${buildPlayerProfile()}
+
+请根据当前世界书正式开始本局复活赛。
+
+要求：
+1. 以玩家档案姓名覆盖酒馆默认用户名称。
+2. 根据死亡原因、生前身份、性格倾向、背景故事和遗愿执念，生成一个特殊能力。
+3. 根据死亡原因、生前身份、死亡现场残留物和遗愿执念，生成一个初始道具。
+4. 特殊能力和初始道具不能过强，必须有条件、限制或代价。
+5. 不要停在准备阶段，不要继续询问玩家，直接进入正文第一幕。
+
+请按以下结构输出：
+【玩家档案确认】
+【特殊能力】
+【初始道具】
+【正赛开始】`;
+  }
+
+  function getSTDocument() {
+    try {
+      if (window.parent && window.parent.document && window.parent.document !== document) {
+        return window.parent.document;
+      }
+    } catch (e) {}
+
+    try {
+      if (window.top && window.top.document && window.top.document !== document) {
+        return window.top.document;
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
+  function findChatInput() {
+    const doc = getSTDocument();
+    if (!doc) return null;
+
+    return doc.querySelector("#send_textarea");
+  }
+
+  function findSendButton() {
+    const doc = getSTDocument();
+    if (!doc) return null;
+
+    return doc.querySelector("#send_but");
+  }
+
+  function showStartedScreen() {
+    document.body.innerHTML = `
+      <div style="
+        min-height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:
+          radial-gradient(circle at 50% 110%, rgba(255,70,10,.35), transparent 38%),
+          linear-gradient(180deg,#140506,#000);
+        color:#ffd17a;
+        font-family:Microsoft YaHei, PingFang SC, sans-serif;
+        text-align:center;
+        padding:24px;
+      ">
+        <div style="
+          border:1px solid rgba(255,106,44,.45);
+          border-radius:20px;
+          padding:28px 34px;
+          background:rgba(28,7,8,.92);
+          box-shadow:0 0 36px rgba(255,42,20,.18);
+        ">
+          <h2 style="margin:0 0 10px;font-size:26px;">复活赛已开始</h2>
+          <p style="margin:0;color:#bfa69c;line-height:1.7;">
+            玩家档案已提交给判官。<br>
+            请查看酒馆正文输出。
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  function setInputValue(input, text) {
+    input.focus();
+
+    if (input.isContentEditable) {
+      input.textContent = text;
+    } else if ("value" in input) {
+      input.value = text;
+    } else {
+      input.textContent = text;
+    }
+
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+
+    try {
+      input.dispatchEvent(new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertText",
+        data: text
+      }));
+    } catch (e) {}
+  }
+
+  function fillInput(text) {
+    const input = findChatInput();
+
+    if (!input) {
+      throw new Error("没找到酒馆的输入框，未提交。");
+    }
+
+    setInputValue(input, text);
+    return input;
+  }
+
+  function clickSend() {
+    const sendBtn = findSendButton();
+
+    if (!sendBtn) {
+      throw new Error("找到了输入框，但没找到酒馆发送按钮，未发送。");
+    }
+
+    sendBtn.click();
+    return true;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function startGame() {
+    const prompt = buildStartPrompt();
+
+    if (!val("pName")) {
+      alert("请先填写玩家姓名。");
+      return;
+    }
+
+    try {
+      fillInput(prompt);
+      await sleep(180);
+      clickSend();
+
+      showStartedScreen();
+    } catch (err) {
+      const msg = err && err.message ? err.message : String(err);
+      alert(msg);
+      setStatus(msg);
+    }
+  }
+
+  function clearForm() {
+    [
+      "pName",
+      "pAge",
+      "pGender",
+      "customGender",
+      "pJob",
+      "customJob",
+      "pPersonality",
+      "customPersonality",
+      "deathReason",
+      "customDeath",
+      "pLook",
+      "pStory",
+      "pWish"
+    ].forEach(id => {
+      if (el(id)) el(id).value = "";
+    });
+
+    ["customGenderBox", "customJobBox", "customPersonalityBox", "customDeathBox"].forEach(id => {
+      if (el(id)) el(id).style.display = "none";
+    });
+
+    const box = el("statusBox");
+    box.innerText = "";
+    box.style.display = "none";
+  }
+</script>
+</body>
+</html>
