@@ -507,24 +507,26 @@
   }
 
   function buildStartPrompt() {
-    return `【玩家开局档案提交】
+    return `<dead_player_start>
+【玩家开局资料】
 
 ${buildPlayerProfile()}
 
-请根据当前世界书正式开始本局复活赛。
+请根据当前世界书，直接开始本局复活赛正文。
 
-要求：
-1. 以玩家档案姓名覆盖酒馆默认用户名称。
-2. 根据死亡原因、生前身份、性格倾向、背景故事和遗愿执念，生成一个特殊能力。
-3. 根据死亡原因、生前身份、死亡现场残留物和遗愿执念，生成一个初始道具。
-4. 特殊能力和初始道具不能过强，必须有条件、限制或代价。
-5. 不要停在准备阶段，不要继续询问玩家，直接进入正文第一幕。
+写作要求：
+- 不要输出“玩家档案确认”“特殊能力”“初始道具”“正赛开始”等模板标题。
+- 不要像报告一样列清单，不要重复解释规则，不要询问玩家是否开始。
+- 直接进入正式剧情正文，让玩家感觉复活赛已经开始。
+- 在正文里自然交代玩家的姓名、死因、外貌、背景或执念。
+- 在剧情推进中自然写明玩家获得的特殊能力和初始道具。
+- 特殊能力与初始道具必须贴合玩家死因、生前身份、性格倾向、背景故事和遗愿执念。
+- 能力和道具不能过强，必须带有触发条件、限制或代价。
+- 从现在开始，“玩家”“用户”“你”都指代玩家档案里的姓名；如果酒馆默认用户名称不同，必须忽略默认名称。
+- 第一幕需要体现地狱复活赛、大富翁式命运格、玩家死亡原因带来的影响，以及玩家面临的第一个选择。
 
-请按以下结构输出：
-【玩家档案确认】
-【特殊能力】
-【初始道具】
-【正赛开始】`;
+直接开始正文。
+</dead_player_start>`;
   }
 
   function getSTDocument() {
@@ -546,47 +548,13 @@ ${buildPlayerProfile()}
   function findChatInput() {
     const doc = getSTDocument();
     if (!doc) return null;
-
     return doc.querySelector("#send_textarea");
   }
 
   function findSendButton() {
     const doc = getSTDocument();
     if (!doc) return null;
-
     return doc.querySelector("#send_but");
-  }
-
-  function showStartedScreen() {
-    document.body.innerHTML = `
-      <div style="
-        min-height:100vh;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:
-          radial-gradient(circle at 50% 110%, rgba(255,70,10,.35), transparent 38%),
-          linear-gradient(180deg,#140506,#000);
-        color:#ffd17a;
-        font-family:Microsoft YaHei, PingFang SC, sans-serif;
-        text-align:center;
-        padding:24px;
-      ">
-        <div style="
-          border:1px solid rgba(255,106,44,.45);
-          border-radius:20px;
-          padding:28px 34px;
-          background:rgba(28,7,8,.92);
-          box-shadow:0 0 36px rgba(255,42,20,.18);
-        ">
-          <h2 style="margin:0 0 10px;font-size:26px;">复活赛已开始</h2>
-          <p style="margin:0;color:#bfa69c;line-height:1.7;">
-            玩家档案已提交给判官。<br>
-            请查看酒馆正文输出。
-          </p>
-        </div>
-      </div>
-    `;
   }
 
   function setInputValue(input, text) {
@@ -651,7 +619,31 @@ ${buildPlayerProfile()}
       await sleep(180);
       clickSend();
 
-      showStartedScreen();
+      document.body.innerHTML = `
+        <div style="
+          min-height:100vh;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:#070304;
+          color:#ffd17a;
+          font-family:Microsoft YaHei, sans-serif;
+          text-align:center;
+          padding:24px;
+        ">
+          <div style="
+            max-width:520px;
+            border:1px solid rgba(255,106,44,.35);
+            border-radius:20px;
+            padding:28px;
+            background:linear-gradient(180deg, rgba(52,12,12,.9), rgba(12,4,5,.95));
+            box-shadow:0 18px 60px rgba(0,0,0,.65);
+          ">
+            <h2 style="margin:0 0 10px;">复活赛已开始</h2>
+            <p style="margin:0;color:#bfa69c;line-height:1.7;">玩家档案已提交，判官正在裁定你的能力、道具与第一幕命运格。</p>
+          </div>
+        </div>
+      `;
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
       alert(msg);
