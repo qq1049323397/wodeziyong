@@ -14,11 +14,11 @@
       width: 320px;
       height: 320px;
       box-sizing: border-box;
-      border: 1px solid rgba(160, 120, 255, 0.55);
+      border: 1px solid rgba(160, 120, 255, 0.65);
       border-radius: 14px;
-      background: linear-gradient(145deg, rgba(35, 28, 48, 0.96), rgba(18, 15, 25, 0.96));
+      background: linear-gradient(145deg, rgba(35, 28, 48, 0.97), rgba(18, 15, 25, 0.97));
       color: #eee8ff;
-      padding: 14px;
+      padding: 12px;
       box-shadow: 0 0 18px rgba(126, 87, 194, 0.35);
       overflow: hidden;
     }
@@ -26,43 +26,113 @@
     .title {
       font-size: 16px;
       font-weight: 700;
-      margin-bottom: 10px;
       color: #f2ddff;
+      margin-bottom: 4px;
+      text-shadow: 0 0 8px rgba(205, 135, 255, 0.7);
     }
 
     .sub {
+      font-size: 11px;
+      opacity: 0.78;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .tab {
+      flex: 1;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      color: #eee8ff;
       font-size: 12px;
-      opacity: 0.75;
-      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(183, 68, 255, 0.8), rgba(104, 54, 200, 0.85));
+      box-shadow: 0 0 10px rgba(190, 80, 255, 0.55);
+      font-weight: 700;
+    }
+
+    .content {
+      height: 226px;
+      overflow: hidden;
+      font-size: 12px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      margin-top: 12px;
+      margin-top: 6px;
+      margin-bottom: 10px;
     }
 
     .cell {
-      height: 34px;
+      height: 31px;
       border-radius: 8px;
       background: rgba(255,255,255,0.08);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 11px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
 
-    .current {
-      background: rgba(202, 75, 255, 0.55);
+    .cell.current {
+      background: rgba(202, 75, 255, 0.62);
       box-shadow: 0 0 10px rgba(202, 75, 255, 0.8);
       font-weight: 700;
     }
 
-    .info {
-      margin-top: 14px;
-      font-size: 13px;
+    .line {
+      line-height: 1.65;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .block-title {
+      margin-top: 6px;
+      margin-bottom: 2px;
+      color: #f2ddff;
+      font-weight: 700;
+    }
+
+    .items {
+      padding-left: 16px;
+      margin: 4px 0 0;
+      line-height: 1.65;
+    }
+
+    .empty {
+      opacity: 0.7;
       line-height: 1.8;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 70px;
+      gap: 4px;
+      padding: 5px 6px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      background: rgba(255,255,255,0.07);
+    }
+
+    .rank-row.player {
+      background: rgba(202, 75, 255, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(202, 75, 255, 0.35);
     }
   </style>
 </head>
@@ -70,27 +140,236 @@
 <body>
   <div class="dead-status-panel">
     <div class="title">复活赛状态栏</div>
-    <div class="sub">轻量测试版 · 状态栏已成功加载</div>
+    <div class="sub" id="subtitle">读取状态中...</div>
 
-    <div class="grid">
-      <div class="cell current">起点</div>
-      <div class="cell">蓝</div>
-      <div class="cell">黄</div>
-      <div class="cell">红</div>
-      <div class="cell">?</div>
-      <div class="cell">蓝</div>
-      <div class="cell">黄</div>
-      <div class="cell">红</div>
-      <div class="cell">店</div>
-      <div class="cell">Boss</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="map">地图</button>
+      <button class="tab" data-tab="profile">档案</button>
+      <button class="tab" data-tab="items">持有</button>
+      <button class="tab" data-tab="rank">排行</button>
+      <button class="tab" data-tab="dice">骰子</button>
     </div>
 
-    <div class="info">
-      当前回合：1<br>
-      当前格子：起点<br>
-      当前阶段：等待剧情开局<br>
-      持有物：暂无
-    </div>
+    <div class="content" id="content"></div>
   </div>
+
+  <script>
+    const FALLBACK_STATE = {
+      玩家档案: {
+        姓名: "未读取",
+        年龄: "未读取",
+        性别: "未读取",
+        生前职业: "未读取",
+        性格倾向: "未读取",
+        死亡原因: "未读取",
+        外貌特征: "未读取",
+        背景故事: "未读取",
+        遗愿执念: "未读取"
+      },
+      主角状态: {
+        姓名: "未读取",
+        身份: "复活赛参赛亡者",
+        当前状态: "等待开局",
+        特殊能力: "待生成",
+        初始道具: "待生成",
+        状态效果: []
+      },
+      资产: {
+        信用点: 0,
+        排名: 1
+      },
+      排行榜: [
+        { 名次: 1, 姓名: "未读取", 信用点: 0, 标记: "玩家" }
+      ],
+      复活赛: {
+        阶段: "等待开局",
+        当前回合: 1,
+        当前场景: "未读取状态",
+        当前事件: "暂无",
+        可投骰: false
+      },
+      地图: {
+        名称: "地狱复活赛棋盘",
+        当前位置: 0,
+        当前格子名称: "起点",
+        当前格子类型: "起点",
+        格子列表: [
+          { index: 0, name: "起点", type: "起点" },
+          { index: 1, name: "蓝", type: "事件" },
+          { index: 2, name: "黄", type: "地产" },
+          { index: 3, name: "红", type: "惩罚" },
+          { index: 4, name: "?", type: "未知" },
+          { index: 5, name: "蓝", type: "事件" },
+          { index: 6, name: "黄", type: "地产" },
+          { index: 7, name: "红", type: "惩罚" },
+          { index: 8, name: "店", type: "商店" },
+          { index: 9, name: "Boss", type: "Boss" }
+        ]
+      },
+      持有物: {
+        道具: [],
+        装备: [],
+        关键物品: []
+      },
+      骰子: {
+        可掷骰: false,
+        最近点数: null,
+        最近移动: null
+      }
+    };
+
+    let currentTab = "map";
+
+    function getStateFromWindow() {
+      const candidates = [];
+
+      try { candidates.push(window); } catch (e) {}
+      try { candidates.push(window.parent); } catch (e) {}
+      try { candidates.push(window.top); } catch (e) {}
+
+      for (const target of candidates) {
+        try {
+          if (target && typeof target.DeadGetGameState === "function") {
+            const state = target.DeadGetGameState();
+            if (state) return state;
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const raw = localStorage.getItem("dead_revive_game_state_v1");
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+
+      return FALLBACK_STATE;
+    }
+
+    function arrText(arr) {
+      if (!Array.isArray(arr) || arr.length === 0) return "暂无";
+      return arr.map(item => {
+        if (typeof item === "string") return item;
+        return item.name || item.名称 || JSON.stringify(item);
+      }).join("、");
+    }
+
+    function renderMap(state) {
+      const map = state.地图 || FALLBACK_STATE.地图;
+      const race = state.复活赛 || FALLBACK_STATE.复活赛;
+      const asset = state.资产 || FALLBACK_STATE.资产;
+      const cells = map.格子列表 || FALLBACK_STATE.地图.格子列表;
+      const pos = Number(map.当前位置 || 0);
+
+      return `
+        <div class="grid">
+          ${cells.map(cell => `
+            <div class="cell ${Number(cell.index) === pos ? "current" : ""}">
+              ${cell.name || cell.名称 || cell.index}
+            </div>
+          `).join("")}
+        </div>
+        <div class="line">当前回合：${race.当前回合 || 1}</div>
+        <div class="line">当前位置：${map.当前格子名称 || "起点"} / ${map.当前格子类型 || "起点"}</div>
+        <div class="line">信用点：${asset.信用点 || 0}</div>
+        <div class="line">当前阶段：${race.阶段 || "未知"}</div>
+      `;
+    }
+
+    function renderProfile(state) {
+      const profile = state.玩家档案 || FALLBACK_STATE.玩家档案;
+      const role = state.主角状态 || FALLBACK_STATE.主角状态;
+
+      return `
+        <div class="line">姓名：${profile.姓名 || "未读取"}</div>
+        <div class="line">年龄：${profile.年龄 || "未读取"}</div>
+        <div class="line">性别：${profile.性别 || "未读取"}</div>
+        <div class="line">生前职业：${profile.生前职业 || "未读取"}</div>
+        <div class="line">死亡原因：${profile.死亡原因 || "未读取"}</div>
+        <div class="block-title">当前状态</div>
+        <div class="line">身份：${role.身份 || "复活赛参赛亡者"}</div>
+        <div class="line">状态：${role.当前状态 || "等待开局"}</div>
+        <div class="line">能力：${role.特殊能力 || "待生成"}</div>
+        <div class="line">道具：${role.初始道具 || "待生成"}</div>
+        <div class="line">效果：${arrText(role.状态效果)}</div>
+      `;
+    }
+
+    function renderItems(state) {
+      const items = state.持有物 || FALLBACK_STATE.持有物;
+      const asset = state.资产 || FALLBACK_STATE.资产;
+
+      return `
+        <div class="line">信用点：${asset.信用点 || 0}</div>
+        <div class="line">当前排名：第 ${asset.排名 || 1} 名</div>
+        <div class="block-title">道具</div>
+        <ul class="items">
+          ${(items.道具 && items.道具.length)
+            ? items.道具.map(x => `<li>${typeof x === "string" ? x : (x.name || x.名称 || "未命名道具")}</li>`).join("")
+            : `<li class="empty">暂无</li>`}
+        </ul>
+        <div class="line">装备：${arrText(items.装备)}</div>
+        <div class="line">关键物品：${arrText(items.关键物品)}</div>
+      `;
+    }
+
+    function renderRank(state) {
+      const ranks = state.排行榜 || FALLBACK_STATE.排行榜;
+      const sorted = ranks.slice().sort((a, b) => Number(b.信用点 || 0) - Number(a.信用点 || 0));
+
+      return `
+        <div class="line" style="margin-bottom:6px;">信用点排行榜</div>
+        ${sorted.map((r, i) => `
+          <div class="rank-row ${r.标记 === "玩家" ? "player" : ""}">
+            <div>#${r.名次 || i + 1}</div>
+            <div>${r.姓名 || "未知"}</div>
+            <div>${r.信用点 || 0}</div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function renderDice(state) {
+      const dice = state.骰子 || FALLBACK_STATE.骰子;
+      const race = state.复活赛 || FALLBACK_STATE.复活赛;
+
+      return `
+        <div class="line">当前阶段：${race.阶段 || "未知"}</div>
+        <div class="line">是否可投骰：${dice.可掷骰 ? "可以" : "暂不可用"}</div>
+        <div class="line">最近点数：${dice.最近点数 === null || dice.最近点数 === undefined ? "暂无" : dice.最近点数}</div>
+        <div class="line">最近移动：${dice.最近移动 === null || dice.最近移动 === undefined ? "暂无" : dice.最近移动 + " 格"}</div>
+        <div class="empty" style="margin-top:12px;">投骰按钮下一步再加。</div>
+      `;
+    }
+
+    function render() {
+      const state = getStateFromWindow();
+      const profile = state.玩家档案 || FALLBACK_STATE.玩家档案;
+      const race = state.复活赛 || FALLBACK_STATE.复活赛;
+      const map = state.地图 || FALLBACK_STATE.地图;
+      const asset = state.资产 || FALLBACK_STATE.资产;
+
+      document.getElementById("subtitle").textContent =
+        `${profile.姓名 || "未读取"} · 信用点 ${asset.信用点 || 0} · ${map.当前格子名称 || "起点"}`;
+
+      const content = document.getElementById("content");
+
+      if (currentTab === "map") content.innerHTML = renderMap(state);
+      if (currentTab === "profile") content.innerHTML = renderProfile(state);
+      if (currentTab === "items") content.innerHTML = renderItems(state);
+      if (currentTab === "rank") content.innerHTML = renderRank(state);
+      if (currentTab === "dice") content.innerHTML = renderDice(state);
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+        currentTab = btn.dataset.tab;
+        render();
+      });
+    });
+
+    render();
+    setInterval(render, 1000);
+  </script>
 </body>
 </html>
