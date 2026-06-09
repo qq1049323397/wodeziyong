@@ -7,28 +7,38 @@
       margin: 0;
       padding: 0;
       background: transparent;
-      font-family: "Microsoft YaHei", sans-serif;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
     }
 
     .dead-status-panel {
       width: 320px;
       height: 320px;
       box-sizing: border-box;
-      border: 1px solid rgba(160, 120, 255, 0.65);
+      border: 1px solid rgba(160, 120, 255, 0.68);
       border-radius: 14px;
       background: linear-gradient(145deg, rgba(35, 28, 48, 0.97), rgba(18, 15, 25, 0.97));
       color: #eee8ff;
       padding: 12px;
-      box-shadow: 0 0 18px rgba(126, 87, 194, 0.35);
+      box-shadow: 0 0 18px rgba(126, 87, 194, 0.36);
       overflow: hidden;
     }
 
     .title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 16px;
       font-weight: 700;
       color: #f2ddff;
       margin-bottom: 4px;
       text-shadow: 0 0 8px rgba(205, 135, 255, 0.7);
+    }
+
+    .credit {
+      font-size: 12px;
+      color: #ffd978;
+      text-shadow: none;
+      white-space: nowrap;
     }
 
     .sub {
@@ -42,7 +52,7 @@
 
     .tabs {
       display: flex;
-      gap: 5px;
+      gap: 4px;
       margin-bottom: 8px;
     }
 
@@ -96,50 +106,102 @@
     }
 
     .line {
-      line-height: 1.65;
+      line-height: 1.72;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .block-title {
-      margin-top: 6px;
-      margin-bottom: 2px;
-      color: #f2ddff;
-      font-weight: 700;
+    .label {
+      opacity: .72;
     }
 
     .items {
       padding-left: 16px;
       margin: 4px 0 0;
-      line-height: 1.65;
+      line-height: 1.7;
     }
 
     .empty {
-      opacity: 0.7;
-      line-height: 1.8;
+      opacity: 0.72;
+      line-height: 1.7;
+    }
+
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
     }
 
     .rank-row {
       display: grid;
-      grid-template-columns: 36px 1fr 70px;
-      gap: 4px;
-      padding: 5px 6px;
+      grid-template-columns: 32px 1fr 72px;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 8px;
       border-radius: 8px;
-      margin-bottom: 5px;
       background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.06);
     }
 
     .rank-row.player {
-      background: rgba(202, 75, 255, 0.28);
-      box-shadow: inset 0 0 0 1px rgba(202, 75, 255, 0.35);
+      background: rgba(202, 75, 255, 0.24);
+      border-color: rgba(202, 75, 255, 0.42);
+    }
+
+    .dice-box {
+      text-align: center;
+      padding-top: 10px;
+    }
+
+    .dice-num {
+      width: 76px;
+      height: 76px;
+      margin: 10px auto;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: inset 0 0 18px rgba(255,255,255,0.05), 0 0 14px rgba(180,80,255,.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 800;
+      color: #fff0ff;
+    }
+
+    .dice-btn {
+      width: 126px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(203, 75, 255, .95), rgba(112, 70, 210, .95));
+      box-shadow: 0 0 12px rgba(190, 80, 255, .42);
+    }
+
+    .dice-btn:active {
+      transform: scale(.98);
+    }
+
+    .notice {
+      margin-top: 10px;
+      opacity: .72;
+      font-size: 11px;
+      line-height: 1.5;
     }
   </style>
 </head>
 
 <body>
   <div class="dead-status-panel">
-    <div class="title">复活赛状态栏</div>
+    <div class="title">
+      <span>复活赛状态栏</span>
+      <span class="credit" id="credit">信用点 0</span>
+    </div>
     <div class="sub" id="subtitle">读取状态中...</div>
 
     <div class="tabs">
@@ -154,6 +216,8 @@
   </div>
 
   <script>
+    const STORAGE_KEY = "dead_revive_game_state_v1";
+
     const FALLBACK_STATE = {
       玩家档案: {
         姓名: "未读取",
@@ -169,7 +233,7 @@
       主角状态: {
         姓名: "未读取",
         身份: "复活赛参赛亡者",
-        当前状态: "等待开局",
+        当前状态: "未读取状态",
         特殊能力: "待生成",
         初始道具: "待生成",
         状态效果: []
@@ -207,6 +271,7 @@
         ]
       },
       持有物: {
+        信用点: 0,
         道具: [],
         装备: [],
         关键物品: []
@@ -214,20 +279,32 @@
       骰子: {
         可掷骰: false,
         最近点数: null,
-        最近移动: null
+        最近时间: "",
+        历史: []
       }
     };
 
     let currentTab = "map";
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getCandidates() {
+      const list = [];
+      try { list.push(window); } catch (e) {}
+      try { if (window.parent && !list.includes(window.parent)) list.push(window.parent); } catch (e) {}
+      try { if (window.top && !list.includes(window.top)) list.push(window.top); } catch (e) {}
+      return list;
+    }
+
     function getStateFromWindow() {
-      const candidates = [];
-
-      try { candidates.push(window); } catch (e) {}
-      try { candidates.push(window.parent); } catch (e) {}
-      try { candidates.push(window.top); } catch (e) {}
-
-      for (const target of candidates) {
+      for (const target of getCandidates()) {
         try {
           if (target && typeof target.DeadGetGameState === "function") {
             const state = target.DeadGetGameState();
@@ -237,11 +314,23 @@
       }
 
       try {
-        const raw = localStorage.getItem("dead_revive_game_state_v1");
+        const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) return JSON.parse(raw);
       } catch (e) {}
 
       return FALLBACK_STATE;
+    }
+
+    function callRollDice() {
+      for (const target of getCandidates()) {
+        try {
+          if (target && typeof target.DeadRollDice === "function") {
+            return target.DeadRollDice();
+          }
+        } catch (e) {}
+      }
+
+      return { ok: false, message: "未找到 DeadRollDice，请确认开局自动化 v1.6 已启用。" };
     }
 
     function arrText(arr) {
@@ -255,7 +344,6 @@
     function renderMap(state) {
       const map = state.地图 || FALLBACK_STATE.地图;
       const race = state.复活赛 || FALLBACK_STATE.复活赛;
-      const asset = state.资产 || FALLBACK_STATE.资产;
       const cells = map.格子列表 || FALLBACK_STATE.地图.格子列表;
       const pos = Number(map.当前位置 || 0);
 
@@ -263,33 +351,30 @@
         <div class="grid">
           ${cells.map(cell => `
             <div class="cell ${Number(cell.index) === pos ? "current" : ""}">
-              ${cell.name || cell.名称 || cell.index}
+              ${escapeHtml(cell.name || cell.名称 || cell.index)}
             </div>
           `).join("")}
         </div>
-        <div class="line">当前回合：${race.当前回合 || 1}</div>
-        <div class="line">当前位置：${map.当前格子名称 || "起点"} / ${map.当前格子类型 || "起点"}</div>
-        <div class="line">信用点：${asset.信用点 || 0}</div>
-        <div class="line">当前阶段：${race.阶段 || "未知"}</div>
+        <div class="line"><span class="label">当前回合：</span>${escapeHtml(race.当前回合 || 1)}</div>
+        <div class="line"><span class="label">当前位置：</span>${escapeHtml(map.当前格子名称 || "起点")} / ${escapeHtml(map.当前格子类型 || "起点")}</div>
+        <div class="line"><span class="label">当前阶段：</span>${escapeHtml(race.阶段 || "未知")}</div>
+        <div class="line"><span class="label">当前事件：</span>${escapeHtml(race.当前事件 || "暂无")}</div>
       `;
     }
 
     function renderProfile(state) {
-      const profile = state.玩家档案 || FALLBACK_STATE.玩家档案;
-      const role = state.主角状态 || FALLBACK_STATE.主角状态;
+      const p = state.玩家档案 || FALLBACK_STATE.玩家档案;
+      const s = state.主角状态 || FALLBACK_STATE.主角状态;
 
       return `
-        <div class="line">姓名：${profile.姓名 || "未读取"}</div>
-        <div class="line">年龄：${profile.年龄 || "未读取"}</div>
-        <div class="line">性别：${profile.性别 || "未读取"}</div>
-        <div class="line">生前职业：${profile.生前职业 || "未读取"}</div>
-        <div class="line">死亡原因：${profile.死亡原因 || "未读取"}</div>
-        <div class="block-title">当前状态</div>
-        <div class="line">身份：${role.身份 || "复活赛参赛亡者"}</div>
-        <div class="line">状态：${role.当前状态 || "等待开局"}</div>
-        <div class="line">能力：${role.特殊能力 || "待生成"}</div>
-        <div class="line">道具：${role.初始道具 || "待生成"}</div>
-        <div class="line">效果：${arrText(role.状态效果)}</div>
+        <div class="line"><span class="label">姓名：</span>${escapeHtml(p.姓名)}</div>
+        <div class="line"><span class="label">年龄：</span>${escapeHtml(p.年龄)}</div>
+        <div class="line"><span class="label">性别：</span>${escapeHtml(p.性别)}</div>
+        <div class="line"><span class="label">生前职业：</span>${escapeHtml(p.生前职业)}</div>
+        <div class="line"><span class="label">死亡原因：</span>${escapeHtml(p.死亡原因)}</div>
+        <div class="line"><span class="label">当前状态：</span>${escapeHtml(s.当前状态)}</div>
+        <div class="line"><span class="label">特殊能力：</span>${escapeHtml(s.特殊能力)}</div>
+        <div class="line"><span class="label">初始道具：</span>${escapeHtml(s.初始道具)}</div>
       `;
     }
 
@@ -298,57 +383,65 @@
       const asset = state.资产 || FALLBACK_STATE.资产;
 
       return `
-        <div class="line">信用点：${asset.信用点 || 0}</div>
-        <div class="line">当前排名：第 ${asset.排名 || 1} 名</div>
-        <div class="block-title">道具</div>
+        <div class="line"><span class="label">信用点：</span>${escapeHtml(asset.信用点 ?? items.信用点 ?? 0)}</div>
+        <div class="line"><span class="label">道具：</span></div>
         <ul class="items">
           ${(items.道具 && items.道具.length)
-            ? items.道具.map(x => `<li>${typeof x === "string" ? x : (x.name || x.名称 || "未命名道具")}</li>`).join("")
+            ? items.道具.map(x => `<li>${escapeHtml(typeof x === "string" ? x : (x.name || x.名称 || "未命名道具"))}</li>`).join("")
             : `<li class="empty">暂无</li>`}
         </ul>
-        <div class="line">装备：${arrText(items.装备)}</div>
-        <div class="line">关键物品：${arrText(items.关键物品)}</div>
+        <div class="line"><span class="label">装备：</span>${escapeHtml(arrText(items.装备))}</div>
+        <div class="line"><span class="label">关键物品：</span>${escapeHtml(arrText(items.关键物品))}</div>
       `;
     }
 
     function renderRank(state) {
-      const ranks = state.排行榜 || FALLBACK_STATE.排行榜;
-      const sorted = ranks.slice().sort((a, b) => Number(b.信用点 || 0) - Number(a.信用点 || 0));
+      const rank = Array.isArray(state.排行榜) ? state.排行榜 : FALLBACK_STATE.排行榜;
 
       return `
-        <div class="line" style="margin-bottom:6px;">信用点排行榜</div>
-        ${sorted.map((r, i) => `
-          <div class="rank-row ${r.标记 === "玩家" ? "player" : ""}">
-            <div>#${r.名次 || i + 1}</div>
-            <div>${r.姓名 || "未知"}</div>
-            <div>${r.信用点 || 0}</div>
-          </div>
-        `).join("")}
+        <div class="rank-list">
+          ${rank.map(row => `
+            <div class="rank-row ${row.标记 === "玩家" ? "player" : ""}">
+              <div>#${escapeHtml(row.名次)}</div>
+              <div>${escapeHtml(row.姓名)}</div>
+              <div>${escapeHtml(row.信用点 || 0)} 点</div>
+            </div>
+          `).join("")}
+        </div>
       `;
     }
 
     function renderDice(state) {
       const dice = state.骰子 || FALLBACK_STATE.骰子;
       const race = state.复活赛 || FALLBACK_STATE.复活赛;
+      const point = dice.最近点数 === null || dice.最近点数 === undefined ? "?" : dice.最近点数;
 
       return `
-        <div class="line">当前阶段：${race.阶段 || "未知"}</div>
-        <div class="line">是否可投骰：${dice.可掷骰 ? "可以" : "暂不可用"}</div>
-        <div class="line">最近点数：${dice.最近点数 === null || dice.最近点数 === undefined ? "暂无" : dice.最近点数}</div>
-        <div class="line">最近移动：${dice.最近移动 === null || dice.最近移动 === undefined ? "暂无" : dice.最近移动 + " 格"}</div>
-        <div class="empty" style="margin-top:12px;">投骰按钮下一步再加。</div>
+        <div class="dice-box">
+          <div class="line"><span class="label">阶段：</span>${escapeHtml(race.阶段 || "未知")}</div>
+          <div class="dice-num">${escapeHtml(point)}</div>
+          <button class="dice-btn" id="rollDiceBtn">掷骰</button>
+          <div class="notice">
+            当前版本只记录点数，不自动推进地图。<br>
+            最近时间：${escapeHtml(dice.最近时间 || "暂无")}
+          </div>
+        </div>
       `;
     }
 
     function render() {
       const state = getStateFromWindow();
+
       const profile = state.玩家档案 || FALLBACK_STATE.玩家档案;
       const race = state.复活赛 || FALLBACK_STATE.复活赛;
       const map = state.地图 || FALLBACK_STATE.地图;
       const asset = state.资产 || FALLBACK_STATE.资产;
 
       document.getElementById("subtitle").textContent =
-        `${profile.姓名 || "未读取"} · 信用点 ${asset.信用点 || 0} · ${map.当前格子名称 || "起点"}`;
+        `${profile.姓名 || "未读取"} · ${race.阶段 || "未知"} · ${map.当前格子名称 || "起点"}`;
+
+      document.getElementById("credit").textContent =
+        `信用点 ${asset.信用点 ?? 0}`;
 
       const content = document.getElementById("content");
 
@@ -356,7 +449,20 @@
       if (currentTab === "profile") content.innerHTML = renderProfile(state);
       if (currentTab === "items") content.innerHTML = renderItems(state);
       if (currentTab === "rank") content.innerHTML = renderRank(state);
-      if (currentTab === "dice") content.innerHTML = renderDice(state);
+      if (currentTab === "dice") {
+        content.innerHTML = renderDice(state);
+        const btn = document.getElementById("rollDiceBtn");
+        if (btn) {
+          btn.onclick = () => {
+            const result = callRollDice();
+            if (!result || !result.ok) {
+              alert(result?.message || "掷骰失败");
+              return;
+            }
+            render();
+          };
+        }
+      }
     }
 
     document.querySelectorAll(".tab").forEach(btn => {
