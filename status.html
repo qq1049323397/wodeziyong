@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    .dead-status-panel {
+      width: 320px;
+      height: 320px;
+      box-sizing: border-box;
+      border: 1px solid rgba(160, 120, 255, 0.55);
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(35, 28, 48, 0.96), rgba(18, 15, 25, 0.96));
+      color: #eee8ff;
+      padding: 14px;
+      box-shadow: 0 0 18px rgba(126, 87, 194, 0.35);
+      overflow: hidden;
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #f2ddff;
+    }
+
+    .sub {
+      font-size: 12px;
+      opacity: 0.75;
+      margin-bottom: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .cell {
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .current {
+      background: rgba(202, 75, 255, 0.55);
+      box-shadow: 0 0 10px rgba(202, 75, 255, 0.8);
+      font-weight: 700;
+    }
+
+    .info {
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dead-status-panel">
+    <div class="title">复活赛状态栏</div>
+    <div class="sub">轻量测试版 · 状态栏已成功加载</div>
+
+    <div class="grid">
+      <div class="cell current">起点</div>
+      <div class="cell">蓝</div>
+      <div class="cell">黄</div>
+      <div class="cell">红</div>
+      <div class="cell">?</div>
+      <div class="cell">蓝</div>
+      <div class="cell">黄</div>
+      <div class="cell">红</div>
+      <div class="cell">店</div>
+      <div class="cell">Boss</div>
+    </div>
+
+    <div class="info">
+      当前回合：1<br>
+      当前格子：起点<br>
+      当前阶段：等待剧情开局<br>
+      持有物：暂无
+    </div>
+  </div>
+</body>
+</html>
