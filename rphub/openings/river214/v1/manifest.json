@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "filename": "bgm.mp3",
+      "mime": "audio/mpeg",
+      "bytes": 1937415,
+      "sha256": "666923df2129a6de25a5f3eccd4a470a1ae0c00247eda2883e8c41ad876ab6fe"
+    },
+    {
+      "filename": "scene-01.webp",
+      "mime": "image/webp",
+      "bytes": 160738,
+      "sha256": "bd779ccb7d62c585720298d8d00f5858026e5aebf78794a04b1ba1c14c63216f"
+    },
+    {
+      "filename": "scene-02.webp",
+      "mime": "image/webp",
+      "bytes": 34434,
+      "sha256": "94a7f36999bbc2a21c4ea0ec5d0449750a7d11e464cb59262e511448ec8cbb73"
+    },
+    {
+      "filename": "scene-03.webp",
+      "mime": "image/webp",
+      "bytes": 50532,
+      "sha256": "7e8baa9536035cb37f05245fa339d30acd2fac6d38d343247bcd9c17ff8a66d8"
+    },
+    {
+      "filename": "scene-04.webp",
+      "mime": "image/webp",
+      "bytes": 125292,
+      "sha256": "7b0ae73f6b2814c35fa3cb84bafd7fc7d37d15e8198035a416808d4e8405f732"
+    },
+    {
+      "filename": "scene-05.webp",
+      "mime": "image/webp",
+      "bytes": 137714,
+      "sha256": "3f0c6b6ce325ead774515aaf3f6050b143f4c4f9e309fe0ff2c1ced287fbf1d1"
+    }
+  ]
+}
