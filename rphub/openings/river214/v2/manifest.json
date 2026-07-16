@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "filename": "bgm.mp3",
+      "mime": "audio/mpeg",
+      "bytes": 4403667,
+      "sha256": "4e6366c19ccb25c46bd8730506ee6b38b6ac95c1942c6496e69086f8c7208e7e"
+    }
+  ]
+}
